@@ -7,11 +7,8 @@ import random
 import time
 import matplotlib.pyplot as plt
 import seaborn as sns
-import cv2
 import pytesseract
-from sklearn.metrics import roc_auc_score, roc_curve
 from PIL import Image
-import io
 
 st.set_page_config(layout="wide")
 st.title("📊 Hate Speech Detection & Model Dashboard")
@@ -35,7 +32,7 @@ model, vectorizer = load_model_and_vectorizer()
 labels = ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]
 
 st.sidebar.header("🛠️ Settings")
-threshold = st.sidebar.slider("Toxicity Threshold", 0.1, 1.0, 0.5, 0.05)
+threshold = st.sidebar.slider("Toxicity Threshold (only applies to probability-based models)", 0.1, 1.0, 0.5, 0.05)
 
 #####################
 # 🔍 Image OCR Input
@@ -52,15 +49,32 @@ if uploaded_image:
 
     vec = vectorizer.transform([text])
     try:
-        probs = model.predict_proba(vec)
-        preds = [int(p[1] >= threshold) if len(p) > 1 else 0 for p in probs]
+        preds = model.predict(vec)[0]
         detected = [labels[i] for i, val in enumerate(preds) if val]
         st.success("Prediction: " + (", ".join(detected) if detected else "Clean"))
     except Exception as e:
         st.error("Model Error: " + str(e))
 
+##########################
+# 📝 Custom User Input
+##########################
+st.subheader("📝 Classify Your Own Comment")
+
+user_text = st.text_area("Enter a sentence or comment below:")
+if st.button("Classify Text"):
+    if user_text.strip():
+        vec = vectorizer.transform([user_text])
+        try:
+            preds = model.predict(vec)[0]
+            detected = [labels[i] for i, val in enumerate(preds) if val]
+            st.success("Prediction: " + (", ".join(detected) if detected else "Clean"))
+        except Exception as e:
+            st.error("Model Error: " + str(e))
+    else:
+        st.warning("Please enter a comment to classify.")
+
 #####################
-# 📈 Visualizations
+# 📊 Visualizations
 #####################
 st.subheader("📊 Advanced Dataset Visualizations")
 
@@ -110,22 +124,5 @@ ax.set_ylim(0.6, 1.0)
 st.pyplot(fig)
 st.dataframe(auc_df.set_index("Model"))
 
-
-##########################
-# 📝 Custom User Input
-##########################
-st.subheader("📝 Classify Your Own Comment")
-
-user_text = st.text_area("Enter a sentence or comment below:")
-if st.button("Classify Text"):
-    if user_text.strip():
-        vec = vectorizer.transform([user_text])
-        try:
-            probs = model.predict_proba(vec)
-            preds = [int(p[1] >= threshold) if len(p) > 1 else 0 for p in probs]
-            detected = [labels[i] for i, val in enumerate(preds) if val]
-            st.success("Prediction: " + (", ".join(detected) if detected else "Clean"))
-        except Exception as e:
-            st.error("Model Error: " + str(e))
-    else:
-        st.warning("Please enter a comment to classify.")
+st.markdown("---")
+st.info("📘 For more info, read the full report in the `README.md`.")

@@ -51,7 +51,10 @@ if simulate:
         comment = random.choice(sample_comments)
         vectorized = vectorizer.transform([comment])
         probs = model.predict_proba(vectorized)
-        predictions = [int(p[1] >= threshold) for p in probs]
+        predictions = [
+             int(p[1] >= threshold) if len(p) > 1 else int(p[0] >= threshold)
+             for p in probs
+]
 
         detected_labels = [labels[i] for i, pred in enumerate(predictions) if pred == 1]
         display_labels = ", ".join(detected_labels) if detected_labels else "Clean"

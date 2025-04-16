@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -7,9 +8,15 @@ import time
 import matplotlib.pyplot as plt
 
 st.set_page_config(layout="wide")
-st.title("🔥 Real-Time Hate Speech Detection Dashboard")
+st.title("🛡️ Hate Speech / Toxic Comment Detection Dashboard")
 
-# Load model and vectorizer
+st.markdown("""
+### 📘 Project: Hate Speech / Toxic Comment Detection  
+Developed as part of **Data Mining (CSE-362)** course by students of IIT (BHU), Varanasi under the guidance of **Dr. Bhaskar Biswas**.  
+**Team:** Harshit Agrawal, Ashish Kumar, Sachin Srivastava  
+**Submitted:** November 25, 2020
+""")
+
 @st.cache_resource
 def load_model():
     model = joblib.load("model.pkl")
@@ -19,12 +26,10 @@ def load_model():
 model, vectorizer = load_model()
 labels = ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]
 
-# Sidebar options
 st.sidebar.header("⚙️ Settings")
 threshold = st.sidebar.slider("Toxicity Threshold", 0.1, 1.0, 0.5, 0.05)
-simulate = st.sidebar.button("▶️ Start Live Stream")
+simulate = st.sidebar.button("▶️ Start Real-time Comment Stream")
 
-# Simulated comment stream
 sample_comments = [
     "I love this community!",
     "You are so stupid and ugly.",
@@ -38,23 +43,19 @@ sample_comments = [
     "Blessings to everyone."
 ]
 
-# Stats
 count_data = {label: 0 for label in labels}
 time_series = []
 
 if simulate:
-    st.subheader("🟢 Live Comment Stream")
-    placeholder = st.empty()
+    st.subheader("🟢 Real-Time Comment Stream")
+    stream_placeholder = st.empty()
     chart_placeholder = st.empty()
 
     for _ in range(20):
         comment = random.choice(sample_comments)
         vectorized = vectorizer.transform([comment])
         probs = model.predict_proba(vectorized)
-        predictions = [
-             int(p[1] >= threshold) if len(p) > 1 else int(p[0] >= threshold)
-             for p in probs
-]
+        predictions = [int(p[1] >= threshold) if len(p) > 1 else int(p[0] >= threshold) for p in probs]
 
         detected_labels = [labels[i] for i, pred in enumerate(predictions) if pred == 1]
         display_labels = ", ".join(detected_labels) if detected_labels else "Clean"
@@ -63,20 +64,18 @@ if simulate:
             count_data[labels[i]] += pred
         time_series.append((time.time(), sum(predictions)))
 
-        with placeholder.container():
+        with stream_placeholder.container():
             st.markdown(f"**Comment:** {comment}")
             st.markdown(f"**Prediction:** `{display_labels}`")
             st.markdown("---")
         time.sleep(1)
 
-    # Visualization
     with chart_placeholder.container():
-        st.subheader("📊 Toxic Comment Count")
+        st.subheader("📊 Toxic Tag Frequency")
         df = pd.DataFrame(list(count_data.items()), columns=["Label", "Count"])
         st.bar_chart(df.set_index("Label"))
 
-# Basic Fairness Audit
-st.subheader("🔍 Bias and Fairness Analysis (Mock)")
+st.subheader("🔍 Bias and Fairness Analysis (Simulation)")
 identity_keywords = {
     "gender": ["he", "she", "man", "woman"],
     "race": ["black", "white", "asian"],
@@ -93,5 +92,7 @@ for category, keywords in identity_keywords.items():
             bias_data[category] += 1
 
 bias_df = pd.DataFrame(list(bias_data.items()), columns=["Category", "Flagged Count"])
-st.write("Bias simulation on identity keywords:")
 st.dataframe(bias_df)
+
+st.markdown("---")
+st.info("📘 For more info, read the full report in the `README.md` or explore the `Report.pdf`.")

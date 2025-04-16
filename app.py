@@ -6,14 +6,19 @@ import joblib
 import random
 import time
 import matplotlib.pyplot as plt
+import seaborn as sns
+import cv2
+import pytesseract
+from sklearn.metrics import roc_auc_score, roc_curve
+from PIL import Image
+import io
 
 st.set_page_config(layout="wide")
-st.title("🛡️ Hate Speech / Toxic Comment Detection Dashboard")
+st.title("📊 Hate Speech Detection & Model Dashboard")
 
 st.markdown("""
-### 📘 Project: Hate Speech / Toxic Comment Detection  
-Developed as part of **Data Mining** course by MSc Data Science and Management students at **IIT Ropar**.  
-**Group Members:**  
+### 🎓 MSc Data Science and Management | IIT Ropar  
+Course: Data Mining | Group Members:  
 - Siddharth Kaushik (2024dss1019)  
 - Saif Saleem (2024dss1015)  
 - Ujjawal Singh (2024dss1023)  
@@ -21,85 +26,86 @@ Developed as part of **Data Mining** course by MSc Data Science and Management s
 """)
 
 @st.cache_resource
-def load_model():
+def load_model_and_vectorizer():
     model = joblib.load("model.pkl")
     vectorizer = joblib.load("vectorizer.pkl")
     return model, vectorizer
 
-model, vectorizer = load_model()
+model, vectorizer = load_model_and_vectorizer()
 labels = ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]
 
-st.sidebar.header("⚙️ Settings")
+st.sidebar.header("🛠️ Settings")
 threshold = st.sidebar.slider("Toxicity Threshold", 0.1, 1.0, 0.5, 0.05)
-simulate = st.sidebar.button("▶️ Start Real-time Comment Stream")
 
-sample_comments = [
-    "I love this community!",
-    "You are so stupid and ugly.",
-    "Let's have a great day everyone!",
-    "You idiot, just shut up.",
-    "Have a wonderful weekend 😊",
-    "I will kill you if you show up again.",
-    "This is nonsense and offensive.",
-    "That's a great idea, thanks for sharing!",
-    "You're a complete moron.",
-    "Blessings to everyone."
-]
+#####################
+# 🔍 Image OCR Input
+#####################
+st.subheader("📷 Text Extraction from Uploaded Screenshot")
 
-count_data = {label: 0 for label in labels}
-time_series = []
+uploaded_image = st.file_uploader("Upload a screenshot containing a comment", type=["png", "jpg", "jpeg"])
+if uploaded_image:
+    image = Image.open(uploaded_image)
+    st.image(image, caption="Uploaded Screenshot", use_column_width=True)
 
-if simulate:
-    st.subheader("🟢 Real-Time Comment Stream")
-    stream_placeholder = st.empty()
-    chart_placeholder = st.empty()
+    text = pytesseract.image_to_string(image)
+    st.write("🔤 Extracted Text:", text)
 
-    for _ in range(20):
-        comment = random.choice(sample_comments)
-        vectorized = vectorizer.transform([comment])
-        try:
-            probs = model.predict_proba(vectorized)
-            predictions = [int(p[1] >= threshold) if len(p) > 1 else 0 for p in probs]
-        except Exception as e:
-            st.error("Prediction error: " + str(e))
-            predictions = [0] * len(labels)
+    vec = vectorizer.transform([text])
+    try:
+        probs = model.predict_proba(vec)
+        preds = [int(p[1] >= threshold) if len(p) > 1 else 0 for p in probs]
+        detected = [labels[i] for i, val in enumerate(preds) if val]
+        st.success("Prediction: " + (", ".join(detected) if detected else "Clean"))
+    except Exception as e:
+        st.error("Model Error: " + str(e))
 
-        detected_labels = [labels[i] for i, pred in enumerate(predictions) if pred == 1]
-        display_labels = ", ".join(detected_labels) if detected_labels else "Clean"
+#####################
+# 📈 Visualizations
+#####################
+st.subheader("📊 Advanced Dataset Visualizations")
 
-        for i, pred in enumerate(predictions):
-            count_data[labels[i]] += pred
-        time_series.append((time.time(), sum(predictions)))
+if st.checkbox("Show Correlation Heatmap"):
+    df = pd.read_csv("train.csv")
+    df.fillna("", inplace=True)
+    correlation = df[labels].corr()
+    fig, ax = plt.subplots()
+    sns.heatmap(correlation, annot=True, cmap="coolwarm", ax=ax)
+    st.pyplot(fig)
 
-        with stream_placeholder.container():
-            st.markdown(f"**Comment:** {comment}")
-            st.markdown(f"**Prediction:** `{display_labels}`")
-            st.markdown("---")
-        time.sleep(1)
+if st.checkbox("Comment Length vs Toxicity (Box + Violin)"):
+    df = pd.read_csv("train.csv")
+    df["length"] = df["comment_text"].fillna("").apply(lambda x: len(x.split()))
+    melted = df.melt(id_vars=["length"], value_vars=labels)
+    fig, axs = plt.subplots(1, 2, figsize=(14, 5))
+    sns.boxplot(x="value", y="length", data=melted[melted["value"] == 1], ax=axs[0])
+    sns.violinplot(x="value", y="length", data=melted[melted["value"] == 1], ax=axs[1])
+    axs[0].set_title("Box Plot: Toxic Lengths")
+    axs[1].set_title("Violin Plot: Toxic Lengths")
+    st.pyplot(fig)
 
-    with chart_placeholder.container():
-        st.subheader("📊 Toxic Tag Frequency")
-        df = pd.DataFrame(list(count_data.items()), columns=["Label", "Count"])
-        st.bar_chart(df.set_index("Label"))
+if st.checkbox("Spam / Unique Word Percentage"):
+    df = pd.read_csv("train.csv")
+    df["unique_percent"] = df["comment_text"].fillna("").apply(lambda x: len(set(x.split())) / (len(x.split()) + 1))
+    df["spam"] = df["unique_percent"] < 0.4
+    spam_ratio = df.groupby("spam")[labels].mean().T
+    fig, ax = plt.subplots()
+    spam_ratio.plot(kind="bar", ax=ax, title="Spam vs Toxicity Rate", figsize=(10, 5))
+    st.pyplot(fig)
 
-st.subheader("🔍 Bias and Fairness Analysis (Simulation)")
-identity_keywords = {
-    "gender": ["he", "she", "man", "woman"],
-    "race": ["black", "white", "asian"],
-    "religion": ["muslim", "christian", "jewish"]
+#####################
+# 📊 Model Comparison Dashboard
+#####################
+st.subheader("🤖 Model Comparison (Simulated AUC Scores)")
+
+# Simulated AUCs as per your report
+auc_data = {
+    "Model": ["SVM (BR)", "SVM (CC)", "LogReg (BR)", "LogReg (CC)", "Extra Trees", "XGBoost", "LSTM", "BERT"],
+    "AUC ROC": [0.66, 0.67, 0.73, 0.76, 0.93, 0.96, 0.97, 0.985]
 }
-bias_data = {key: 0 for key in identity_keywords}
+auc_df = pd.DataFrame(auc_data)
 
-for category, keywords in identity_keywords.items():
-    for word in keywords:
-        sentence = f"This {word} is bad."
-        vec = vectorizer.transform([sentence])
-        pred = model.predict(vec)[0]
-        if any(pred):
-            bias_data[category] += 1
-
-bias_df = pd.DataFrame(list(bias_data.items()), columns=["Category", "Flagged Count"])
-st.dataframe(bias_df)
-
-st.markdown("---")
-st.info("📘 For more info, read the full report in the `README.md`.")
+fig, ax = plt.subplots()
+sns.barplot(data=auc_df, x="Model", y="AUC ROC", palette="mako", ax=ax)
+ax.set_ylim(0.6, 1.0)
+st.pyplot(fig)
+st.dataframe(auc_df.set_index("Model"))

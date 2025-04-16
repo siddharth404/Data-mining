@@ -109,3 +109,23 @@ sns.barplot(data=auc_df, x="Model", y="AUC ROC", palette="mako", ax=ax)
 ax.set_ylim(0.6, 1.0)
 st.pyplot(fig)
 st.dataframe(auc_df.set_index("Model"))
+
+
+##########################
+# 📝 Custom User Input
+##########################
+st.subheader("📝 Classify Your Own Comment")
+
+user_text = st.text_area("Enter a sentence or comment below:")
+if st.button("Classify Text"):
+    if user_text.strip():
+        vec = vectorizer.transform([user_text])
+        try:
+            probs = model.predict_proba(vec)
+            preds = [int(p[1] >= threshold) if len(p) > 1 else 0 for p in probs]
+            detected = [labels[i] for i, val in enumerate(preds) if val]
+            st.success("Prediction: " + (", ".join(detected) if detected else "Clean"))
+        except Exception as e:
+            st.error("Model Error: " + str(e))
+    else:
+        st.warning("Please enter a comment to classify.")

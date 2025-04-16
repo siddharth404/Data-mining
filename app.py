@@ -12,9 +12,12 @@ st.title("🛡️ Hate Speech / Toxic Comment Detection Dashboard")
 
 st.markdown("""
 ### 📘 Project: Hate Speech / Toxic Comment Detection  
-Developed as part of **Data Mining (CSE-362)** course by students of IIT (BHU), Varanasi under the guidance of **Dr. Bhaskar Biswas**.  
-**Team:** Harshit Agrawal, Ashish Kumar, Sachin Srivastava  
-**Submitted:** November 25, 2020
+Developed as part of **Data Mining** course by MSc Data Science and Management students at **IIT Ropar**.  
+**Group Members:**  
+- Siddharth Kaushik (2024dss1019)  
+- Saif Saleem (2024dss1015)  
+- Ujjawal Singh (2024dss1023)  
+- Ayush Kumar (2024dss1004)  
 """)
 
 @st.cache_resource
@@ -54,8 +57,12 @@ if simulate:
     for _ in range(20):
         comment = random.choice(sample_comments)
         vectorized = vectorizer.transform([comment])
-        probs = model.predict_proba(vectorized)
-        predictions = [int(p[1] >= threshold) if len(p) > 1 else int(p[0] >= threshold) for p in probs]
+        try:
+            probs = model.predict_proba(vectorized)
+            predictions = [int(p[1] >= threshold) if len(p) > 1 else 0 for p in probs]
+        except Exception as e:
+            st.error("Prediction error: " + str(e))
+            predictions = [0] * len(labels)
 
         detected_labels = [labels[i] for i, pred in enumerate(predictions) if pred == 1]
         display_labels = ", ".join(detected_labels) if detected_labels else "Clean"
@@ -95,4 +102,4 @@ bias_df = pd.DataFrame(list(bias_data.items()), columns=["Category", "Flagged Co
 st.dataframe(bias_df)
 
 st.markdown("---")
-st.info("📘 For more info, read the full report in the `README.md` or explore the `Report.pdf`.")
+st.info("📘 For more info, read the full report in the `README.md`.")

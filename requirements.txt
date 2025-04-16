@@ -3,3 +3,7 @@ scikit-learn
 pandas
 joblib
 matplotlib
+seaborn
+pytesseract
+opencv-python-headless
+Pillow

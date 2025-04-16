@@ -1,46 +1,77 @@
 
-# Hate Speech / Toxic Comment Detection
+# Hate Speech / Toxic Comment Detection Dashboard
 
-### Group Members:
-1. Siddharth Kaushik - 2024dss1019
-2. Saif Saleem - 2024dss1015
-3. Ujjawal Singh - 2024dss1023
-4. Ayush Kumar - 2024dss1004
+## 👨‍🎓 Developed By:
+**MSc Data Science and Management Students**  
+**Indian Institute of Technology, Ropar**
 
-### MSc Data Science and Management  
-Indian Institute of Technology, Ropar  
-Course: Data Mining
+### 👥 Group Members:
+1. Siddharth Kaushik - 2024dss1019  
+2. Saif Saleem - 2024dss1015  
+3. Ujjawal Singh - 2024dss1023  
+4. Ayush Kumar - 2024dss1004  
 
-## 🔍 Project Summary
-This project addresses the challenge of detecting toxic comments on social platforms using classical ML, ensemble tree methods, and deep learning (LSTM) with pretrained embeddings. It implements:
+## 📘 Course:
+**Data Mining** — Semester Project
 
-- Binary Relevance & Classifier Chains
+---
+
+## 💡 Project Overview
+This project detects hate speech and toxic comments using multiple machine learning and deep learning models. It incorporates:
+
 - Logistic Regression, SVM, Extra Trees, XGBoost
-- LSTM with Word2Vec, GloVe, FastText
-- Real-time simulation
-- Customizable toxicity threshold
-- Bias and fairness evaluation
-
-## 📊 Dataset
-- 160k+ comments labeled with 6 tags:
-  - toxic
-  - severe_toxic
-  - obscene
-  - threat
-  - insult
-  - identity_hate
-
-## 🧪 Features
+- LSTM and fine-tuned Transformer models like BERT
 - Real-time comment stream classification
-- Adjustable threshold for toxicity
-- Bias testing on identity-sensitive phrases
-- Visualization of toxic label distribution
+- OCR-based image upload and analysis
+- Exploratory data visualizations
+- Model performance dashboard
 
-## 🚀 Deployment
+---
+
+## 📊 Features
+
+- ✅ Upload and classify comments or screenshots
+- ✅ Extract text from images using OCR (Tesseract)
+- ✅ Custom threshold slider for sensitivity tuning
+- ✅ Heatmap of label correlation
+- ✅ Box & violin plots of comment length vs toxicity
+- ✅ Spam/unique word ratio analysis
+- ✅ Side-by-side model AUC ROC comparison
+- ✅ Streamlit-ready dashboard for demo or deployment
+
+---
+
+## 🛠 Installation
+
 ```bash
 pip install -r requirements.txt
+```
+
+## 🚀 Run the App
+
+```bash
 streamlit run app.py
 ```
 
-## 🎓 Academic Context
-Submitted for the Data Mining Course, MSc Data Science and Management, IIT Ropar.
+---
+
+## 📂 Files
+
+- `app.py`: Main dashboard code
+- `model.pkl` / `vectorizer.pkl`: Pre-trained classification model
+- `requirements.txt`: Python dependencies
+- `README.md`: Documentation
+
+---
+
+## 📄 Dataset
+
+Used the Jigsaw Toxic Comment Classification Challenge dataset with labels:
+- toxic, severe_toxic, obscene, threat, insult, identity_hate
+
+---
+
+## 🎯 Project Context
+
+This project is a part of the **Data Mining** course for the MSc in Data Science and Management program at **IIT Ropar**, submitted in 2025.
+

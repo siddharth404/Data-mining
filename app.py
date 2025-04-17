@@ -9,7 +9,6 @@ from PIL import Image
 
 import easyocr
 reader = easyocr.Reader(["en"], gpu=False)
-import pytesseract
 
 st.set_page_config(layout="wide")
 st.title("🛡️ Hate Speech / Toxic Comment Detection Dashboard")

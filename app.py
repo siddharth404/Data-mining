@@ -8,7 +8,7 @@ from PIL import Image
 import easyocr
 
 st.set_page_config(layout="wide")
-st.title("🛡️ Hate Speech / Toxic Comment Detection Dashboard")
+st.title("🛡️ Negative and Harmful Comment Detection Dashboard")
 
 st.markdown("""
 ### 🎓 MSc Data Science and Management | IIT Ropar  

@@ -1,5 +1,5 @@
 
-# 🛡️ Hate Speech / Toxic Comment Detection
+# 🛡️ Negative and Harmful Comment Detection
 
 ### 🎓 MSc Data Science and Management | IIT Ropar
 Course: Data Mining  

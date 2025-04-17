@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -6,9 +5,7 @@ import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
 from PIL import Image
-
 import easyocr
-reader = easyocr.Reader(["en"], gpu=False)
 
 st.set_page_config(layout="wide")
 st.title("🛡️ Hate Speech / Toxic Comment Detection Dashboard")
@@ -29,6 +26,7 @@ def load_model():
     return model, vectorizer
 
 model, vectorizer = load_model()
+reader = easyocr.Reader(["en"], gpu=False)
 labels = ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]
 
 ######################
@@ -53,24 +51,15 @@ uploaded_image = st.file_uploader("Upload image (screenshot of comment)", type=[
 if uploaded_image:
     image = Image.open(uploaded_image)
     st.image(image, caption="Uploaded Image", use_column_width=True)
-
-    text = reader.readtext(np.array(image), detail=0)
-    extracted_text = " ".join(text)
-    if not extracted.strip():
+    ocr_result = reader.readtext(np.array(image), detail=0)
+    extracted_text = " ".join(ocr_result)
+    if not extracted_text.strip():
         st.warning("No readable text detected.")
     else:
-        if not extracted_text.strip():
-            st.warning("No readable text detected.")
-        else:
-            vec = vectorizer.transform([extracted_text.strip()])
-    preds = model.predict(vec)[0]
-    detected = [labels[i] for i, val in enumerate(preds) if val]
-    st.success("Prediction: " + (", ".join(detected) if detected else "Clean"))
-    st.write("Extracted Text:", text)
-    vec = vectorizer.transform([text])
-    preds = model.predict(vec)[0]
-    detected = [labels[i] for i, val in enumerate(preds) if val]
-    st.success("Prediction: " + (", ".join(detected) if detected else "Clean"))
+        vec = vectorizer.transform([extracted_text.strip()])
+        preds = model.predict(vec)[0]
+        detected = [labels[i] for i, val in enumerate(preds) if val]
+        st.success("Prediction: " + (", ".join(detected) if detected else "Clean"))
 
 ######################
 # 📊 Visualizations

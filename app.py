@@ -6,6 +6,9 @@ import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
 from PIL import Image
+
+import easyocr
+reader = easyocr.Reader(["en"], gpu=False)
 import pytesseract
 
 st.set_page_config(layout="wide")
@@ -51,7 +54,14 @@ uploaded_image = st.file_uploader("Upload image (screenshot of comment)", type=[
 if uploaded_image:
     image = Image.open(uploaded_image)
     st.image(image, caption="Uploaded Image", use_column_width=True)
-    text = pytesseract.image_to_string(image)
+
+    text = reader.readtext(np.array(image), detail=0)
+    extracted = " ".join(text)
+    st.write("Extracted Text:", extracted)
+    vec = vectorizer.transform([extracted])
+    preds = model.predict(vec)[0]
+    detected = [labels[i] for i, val in enumerate(preds) if val]
+    st.success("Prediction: " + (", ".join(detected) if detected else "Clean"))
     st.write("Extracted Text:", text)
     vec = vectorizer.transform([text])
     preds = model.predict(vec)[0]

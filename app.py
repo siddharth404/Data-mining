@@ -56,8 +56,10 @@ if uploaded_image:
 
     text = reader.readtext(np.array(image), detail=0)
     extracted = " ".join(text)
-    st.write("Extracted Text:", extracted)
-    vec = vectorizer.transform([extracted])
+    if not extracted.strip():
+        st.warning("No readable text detected.")
+    else:
+        vec = vectorizer.transform([extracted.strip()])
     preds = model.predict(vec)[0]
     detected = [labels[i] for i, val in enumerate(preds) if val]
     st.success("Prediction: " + (", ".join(detected) if detected else "Clean"))
